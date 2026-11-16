@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>YMH219 - Flappy Bird (Mobil & Masaüstü)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f172a;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .hud-bar {
+      width: 100%;
+      max-width: 520px;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 8px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 2px solid #334155;
+      z-index: 10;
+    }
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-start { background: #10b981; }
+    .btn-pause { background: #3b82f6; }
+    select {
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 13px;
+    }
+    .stats {
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .score-text { color: #facc15; }
+    .high-text { color: #94a3b8; }
+    .lvl-text { color: #38bdf8; }
+    .game-wrapper {
+      flex: 1;
+      width: 100%;
+      max-width: 520px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-bar">
+    <div class="hud-controls">
+      <button class="btn btn-start" id="btnStart">Yeni Oyun</button>
+      <button class="btn btn-pause" id="btnPause">Duraklat</button>
+      <select id="selDiff">
+        <option value="Kolay">Kolay</option>
+        <option value="Normal" selected>Normal</option>
+        <option value="Zor">Zor</option>
+      </select>
+    </div>
+    <div class="stats">
+      <span class="score-text" id="lblScore">Skor: 0</span>
+      <span class="high-text" id="lblHigh">En Yüksek: 0</span>
+      <span class="lvl-text" id="lblLevel">Sv: 1</span>
+    </div>
+  </div>
+
+  <div class="game-wrapper">
+    <canvas id="gameCanvas" width="480" height="720"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const btnStart = document.getElementById("btnStart");
+    const btnPause = document.getElementById("btnPause");
+    const selDiff = document.getElementById("selDiff");
+    const lblScore = document.getElementById("lblScore");
+    const lblHigh = document.getElementById("lblHigh");
+    const lblLevel = document.getElementById("lblLevel");
+
+    const DIFFICULTY = {
+      Kolay:  { speed: 3.0, gap: 185, gravity: 0.45, jump: -8.2 },
+      Normal: { speed: 3.8, gap: 160, gravity: 0.52, jump: -8.8 },
+      Zor:    { speed: 4.8, gap: 138, gravity: 0.62, jump: -9.4 }
+    };
+
+    let state = "READY"; // READY, PLAYING, PAUSED, GAMEOVER
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem("ymh219_flappy_high") || "0", 10);
+    let level = 1;
+    let currentDiff = "Normal";
+    let pipeSpeed = DIFFICULTY.Normal.speed;
+    let groundOffset = 0;
+    const groundHeight = 70;
+
+    const bird = {
+      x: 95,
+      y: 280,
+      w: 40,
+      h: 30,
+      vy: 0,
+      wingPhase: 0
+    };
+
+    let pipes = [];
+    const pipeWidth = 64;
+    const pipeSpacing = 250;
+
+    function initPipes() {
+      pipes = [];
+      const gap = DIFFICULTY[currentDiff].gap;
+      for (let i = 0; i < 3; i++) {
+        pipes.push({
+          x: 340 + i * pipeSpacing,
+          gapY: randomGapY(gap),
+          gapH: gap,
+          scored: false
+        });
+      }
+    }
+
+    function randomGapY(gapH) {
+      const minTop = 65;
+      const maxTop = canvas.height - groundHeight - gapH - 65;
+      return Math.floor(minTop + Math.random() * Math.max(40, maxTop - minTop));
+    }
+
+    function resetGame() {
+      score = 0;
+      level = 1;
+      currentDiff = selDiff.value;
+      pipeSpeed = DIFFICULTY[currentDiff].speed;
+      bird.x = 95;
+      bird.y = (canvas.height - groundHeight) / 2 - 20;
+      bird.vy = 0;
+      initPipes();
+      updateHud();
+    }
+
+    function jump() {
+      if (state === "READY") {
+        resetGame();
+        state = "PLAYING";
+        bird.vy = DIFFICULTY[currentDiff].jump;
+      } else if (state === "PLAYING") {
+        bird.vy = DIFFICULTY[currentDiff].jump;
+      } else if (state === "GAMEOVER") {
+        resetGame();
+        state = "PLAYING";
+        bird.vy = DIFFICULTY[currentDiff].jump;
+      }
+      updateHud();
+    }
+
+    function updateHud() {
+      lblScore.textContent = `Skor: ${score}`;
+      lblHigh.textContent = `En Yüksek: ${highScore}`;
+      lblLevel.textContent = `Sv: ${level}`;
+    }
+
+    function update() {
+      if (state !== "PLAYING") return;
+
+      const cfg = DIFFICULTY[currentDiff];
+      bird.vy = Math.min(11, bird.vy + cfg.gravity);
+      bird.y += bird.vy;
+      bird.wingPhase = (bird.wingPhase + 1) % 12;
+      if (bird.y < 0) {
+        bird.y = 0;
+        bird.vy = 0;
+      }
+
+      groundOffset = (groundOffset + pipeSpeed) % 32;
+      const groundTop = canvas.height - groundHeight;
+
+      let rightmost = Math.max(...pipes.map(p => p.x));
+      for (const p of pipes) {
+        p.x -= pipeSpeed;
+
+        if (!p.scored && p.x + pipeWidth < bird.x) {
+          p.scored = true;
+          score++;
+          const newLvl = Math.floor(score / 5) + 1;
+          if (newLvl > level) {
+            level = newLvl;
+            pipeSpeed += 0.35;
+          }
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("ymh219_flappy_high", String(highScore));
+          }
+          updateHud();
+        }
+
+        if (p.x + pipeWidth < 0) {
+          p.x = Math.max(canvas.width + 20, rightmost + pipeSpacing);
+          p.gapH = cfg.gap;
+          p.gapY = randomGapY(cfg.gap);
+          p.scored = false;
+          rightmost = p.x;
+        }
+      }
+
+      // Çarpışma kontrolü
+      const bx = bird.x + 4, by = bird.y + 4, bw = bird.w - 8, bh = bird.h - 8;
+      if (by + bh >= groundTop) {
+        state = "GAMEOVER";
+        updateHud();
+        return;
+      }
+
+      for (const p of pipes) {
+        const hitX = bx + bw > p.x && bx < p.x + pipeWidth;
+        const hitTop = by < p.gapY;
+        const hitBottom = by + bh > p.gapY + p.gapH;
+        if (hitX && (hitTop || hitBottom)) {
+          state = "GAMEOVER";
+          updateHud();
+          return;
+        }
+      }
+    }
+
+    function draw() {
+      const W = canvas.width;
+      const H = canvas.height;
+      const groundTop = H - groundHeight;
+
+      // Gökyüzü
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, groundTop);
+      skyGrad.addColorStop(0, "#38bdf8");
+      skyGrad.addColorStop(1, "#bae6fd");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, groundTop);
+
+      // Bulutlar
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      drawCloud(60, 80, 90, 34);
+      drawCloud(250, 55, 110, 38);
+      drawCloud(370, 110, 85, 30);
+
+      // Borular
+      for (const p of pipes) {
+        drawPipe(p.x, 0, pipeWidth, p.gapY, true);
+        const botY = p.gapY + p.gapH;
+        drawPipe(p.x, botY, pipeWidth, Math.max(0, groundTop - botY), false);
+      }
+
+      // Zemin
+      ctx.fillStyle = "#d9a066";
+      ctx.fillRect(0, groundTop, W, groundHeight);
+      ctx.fillStyle = "#65a30d";
+      ctx.fillRect(0, groundTop, W, 16);
+
+      // Kuş
+      drawBird(bird.x, bird.y, bird.w, bird.h);
+
+      // Canlı Skor
+      ctx.font = "bold 38px 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillText(String(score), W / 2 + 2, 56);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(String(score), W / 2, 54);
+
+      if (state !== "PLAYING") {
+        drawOverlay(W, groundTop);
+      }
+    }
+
+    function drawCloud(x, y, w, h) {
+      ctx.beginPath();
+      ctx.ellipse(x + w * 0.3, y + h * 0.55, w * 0.25, h * 0.38, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + w * 0.5, y + h * 0.45, w * 0.28, h * 0.48, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + w * 0.72, y + h * 0.58, w * 0.24, h * 0.36, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawPipe(x, y, w, h, isTop) {
+      if (h <= 0) return;
+      const grad = ctx.createLinearGradient(x, 0, x + w, 0);
+      grad.addColorStop(0, "#22c55e");
+      grad.addColorStop(1, "#15803d");
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = "#14532d";
+      ctx.lineWidth = 2;
+
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+
+      const capH = Math.min(22, h);
+      const capY = isTop ? y + h - capH : y;
+      ctx.fillRect(x - 4, capY, w + 8, capH);
+      ctx.strokeRect(x - 4, capY, w + 8, capH);
+    }
+
+    function drawBird(x, y, w, h) {
+      ctx.save();
+      ctx.fillStyle = "#facc15";
+      ctx.strokeStyle = "#713f12";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Kanat
+      const wingY = bird.wingPhase < 6 ? y + 13 : y + 17;
+      ctx.fillStyle = "#fef08a";
+      ctx.beginPath();
+      ctx.ellipse(x + 14, wingY, 8, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Göz
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(x + w - 10, y + 10, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#000000";
+      ctx.beginPath();
+      ctx.arc(x + w - 9, y + 10, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Gaga
+      ctx.fillStyle = "#f97316";
+      ctx.beginPath();
+      ctx.moveTo(x + w - 2, y + 12);
+      ctx.lineTo(x + w + 9, y + 16);
+      ctx.lineTo(x + w - 2, y + 21);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawOverlay(W, groundTop) {
+      const boxW = W - 48;
+      const boxH = 210;
+      const boxX = 24;
+      const boxY = (groundTop - boxH) / 2;
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.90)";
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 2;
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+      ctx.textAlign = "center";
+      if (state === "GAMEOVER") {
+        ctx.fillStyle = "#f87171";
+        ctx.font = "bold 24px 'Segoe UI', sans-serif";
+        ctx.fillText("GAME OVER - OYUN BİTTİ", W / 2, boxY + 48);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "16px 'Segoe UI', sans-serif";
+        ctx.fillText(`Skorunuz: ${score}  |  En Yüksek: ${highScore}`, W / 2, boxY + 95);
+        ctx.fillText(`Seviye: ${level} (${currentDiff})`, W / 2, boxY + 124);
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "italic 14px 'Segoe UI', sans-serif";
+        ctx.fillText("Tekrar oynamak için ekrana dokunun!", W / 2, boxY + 172);
+      } else if (state === "PAUSED") {
+        ctx.fillStyle = "#facc15";
+        ctx.font = "bold 24px 'Segoe UI', sans-serif";
+        ctx.fillText("OYUN DURAKLATILDI", W / 2, boxY + 60);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "16px 'Segoe UI', sans-serif";
+        ctx.fillText("Devam etmek için 'Duraklat' butonuna dokunun.", W / 2, boxY + 120);
+      } else {
+        ctx.fillStyle = "#4ade80";
+        ctx.font = "bold 23px 'Segoe UI', sans-serif";
+        ctx.fillText("FLAPPY BIRD MOBİL", W / 2, boxY + 48);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "15px 'Segoe UI', sans-serif";
+        ctx.fillText(`Zorluk: ${currentDiff}  |  En Yüksek: ${highScore}`, W / 2, boxY + 92);
+        ctx.fillText("Emine Zehra Duyar - YMH 219", W / 2, boxY + 122);
+        ctx.fillStyle = "#38bdf8";
+        ctx.font = "bold 15px 'Segoe UI', sans-serif";
+        ctx.fillText("Başlamak ve zıplamak için ekrana dokunun!", W / 2, boxY + 170);
+      }
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      jump();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+        e.preventDefault();
+        jump();
+      }
+    });
+
+    btnStart.addEventListener("click", () => {
+      resetGame();
+      state = "PLAYING";
+    });
+
+    btnPause.addEventListener("click", () => {
+      if (state === "PLAYING") state = "PAUSED";
+      else if (state === "PAUSED") state = "PLAYING";
+    });
+
+    selDiff.addEventListener("change", () => {
+      resetGame();
+      state = "READY";
+    });
+
+    resetGame();
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
