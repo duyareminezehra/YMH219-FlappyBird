@@ -13,11 +13,22 @@ namespace YMH219_FlappyBird
         {
             ApplicationConfiguration.Initialize();
 
-            if (args.Contains("--generate-screenshots"))
+            if (args.Contains("--generate-screenshots") || Environment.GetCommandLineArgs().Any(a => a.Contains("--generate-screenshots")))
             {
-                using var form = new MainForm();
-                string screenshotsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "screenshots");
-                form.SaveDocumentationScreenshots(Path.GetFullPath(screenshotsDir));
+                try
+                {
+                    using var form = new MainForm();
+                    string screenshotsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "screenshots");
+                    string targetPath = Path.GetFullPath(screenshotsDir);
+                    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug_screenshot.log"), "Target: " + targetPath + Environment.NewLine);
+                    form.SaveDocumentationScreenshots(targetPath);
+                    File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug_screenshot.log"), "Success!" + Environment.NewLine);
+                    form.Close();
+                }
+                catch (Exception ex)
+                {
+                    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug_screenshot.log"), "Error: " + ex.ToString());
+                }
                 return;
             }
 
