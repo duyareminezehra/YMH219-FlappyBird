@@ -186,6 +186,7 @@
         </select>
         <select id="selBird" title="Kuş Karakteri Seçimi">
           <option value="SariKanarya" selected>Kuş: Sarı Kanarya 🐤</option>
+          <option value="PolisKusu">Kuş: Polis Kuşu 👮</option>
           <option value="KizilAnka">Kuş: Kızıl Anka 🔥</option>
           <option value="MaviFirtina">Kuş: Mavi Fırtına ⚡</option>
           <option value="ZumrutKusu">Kuş: Zümrüt Kuşu 🌿</option>
@@ -258,11 +259,12 @@
     };
 
     const BIRD_SKINS = {
-      SariKanarya: { body: "#facc15", wing: "#fef08a", beak: "#f97316", outline: "#713f12", crest: false },
-      KizilAnka:   { body: "#ef4444", wing: "#fde047", beak: "#f97316", outline: "#7f1d1d", crest: true },
-      MaviFirtina: { body: "#0ea5e9", wing: "#e0f2fe", beak: "#facc15", outline: "#0c4a6e", crest: true },
-      ZumrutKusu:  { body: "#10b981", wing: "#a7f3d0", beak: "#f97316", outline: "#064e3b", crest: true },
-      MorGolge:    { body: "#a855f7", wing: "#f5d0fe", beak: "#facc15", outline: "#581c87", crest: true }
+      SariKanarya: { body: "#facc15", wing: "#fef08a", beak: "#f97316", outline: "#713f12", crest: false, police: false },
+      PolisKusu:   { body: "#1e3a8a", wing: "#3b82f6", beak: "#f97316", outline: "#0f172a", crest: false, police: true },
+      KizilAnka:   { body: "#ef4444", wing: "#fde047", beak: "#f97316", outline: "#7f1d1d", crest: true,  police: false },
+      MaviFirtina: { body: "#0ea5e9", wing: "#e0f2fe", beak: "#facc15", outline: "#0c4a6e", crest: true,  police: false },
+      ZumrutKusu:  { body: "#10b981", wing: "#a7f3d0", beak: "#f97316", outline: "#064e3b", crest: true,  police: false },
+      MorGolge:    { body: "#a855f7", wing: "#f5d0fe", beak: "#facc15", outline: "#581c87", crest: true,  police: false }
     };
 
     let state = "READY"; // READY, PLAYING, PAUSED, GAMEOVER
@@ -505,6 +507,7 @@
     function drawBird(x, y, w, h) {
       const skin = BIRD_SKINS[currentBirdSkin] || BIRD_SKINS.SariKanarya;
       ctx.save();
+      // Gövde
       ctx.fillStyle = skin.body;
       ctx.strokeStyle = skin.outline;
       ctx.lineWidth = 2;
@@ -512,6 +515,33 @@
       ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+
+      // Polis üniforması detayları (Beyaz yaka, kırmızı kravat ve göğüs rozeti)
+      if (skin.police) {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(x + 22, y + 18);
+        ctx.lineTo(x + 32, y + 18);
+        ctx.lineTo(x + 27, y + 27);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#dc2626";
+        ctx.beginPath();
+        ctx.moveTo(x + 26, y + 19);
+        ctx.lineTo(x + 29, y + 19);
+        ctx.lineTo(x + 28, y + 28);
+        ctx.lineTo(x + 25, y + 28);
+        ctx.closePath();
+        ctx.fill();
+
+        // Altın göğüs rozeti
+        ctx.fillStyle = "#facc15";
+        ctx.beginPath();
+        ctx.ellipse(x + 21, y + 17, 3, 3.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
 
       // Üst İbik / Tüy
       if (skin.crest) {
@@ -543,6 +573,39 @@
       ctx.beginPath();
       ctx.arc(x + w - 9, y + 10, 2, 0, Math.PI * 2);
       ctx.fill();
+
+      // Polis Şapkası (Kep, beyaz şerit, siyah siperlik ve altın kokart)
+      if (skin.police) {
+        ctx.fillStyle = "#172554";
+        ctx.beginPath();
+        ctx.moveTo(x + 6, y + 3);
+        ctx.lineTo(x + 10, y - 7);
+        ctx.lineTo(x + 32, y - 8);
+        ctx.lineTo(x + 33, y + 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Beyaz şapka şeridi
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x + 8, y + 1, 25, 3);
+
+        // Siyah siperlik
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.moveTo(x + 24, y + 2);
+        ctx.lineTo(x + 41, y + 5);
+        ctx.lineTo(x + 39, y + 8);
+        ctx.lineTo(x + 24, y + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Altın polis arması
+        ctx.fillStyle = "#facc15";
+        ctx.beginPath();
+        ctx.ellipse(x + 26, y - 2, 2.6, 3.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Gaga
       ctx.fillStyle = skin.beak;
