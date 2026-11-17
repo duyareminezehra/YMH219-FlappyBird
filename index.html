@@ -25,29 +25,35 @@
     }
     .hud-bar {
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       background: #1e293b;
       color: #f8fafc;
-      padding: 8px 12px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-bottom: 2px solid #334155;
+      z-index: 10;
+    }
+    .hud-row {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      border-bottom: 2px solid #334155;
-      z-index: 10;
+      gap: 6px;
     }
     .hud-controls {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 6px;
     }
     .btn {
       border: none;
       border-radius: 6px;
-      padding: 7px 12px;
+      padding: 6px 11px;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12.5px;
       color: #fff;
       cursor: pointer;
     }
@@ -58,12 +64,13 @@
       color: #f8fafc;
       border: 1px solid #475569;
       border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 13px;
+      padding: 5px 6px;
+      font-size: 12px;
+      font-weight: 600;
     }
     .stats {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       font-size: 13px;
       font-weight: 700;
     }
@@ -73,7 +80,7 @@
     .game-wrapper {
       flex: 1;
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       position: relative;
       display: flex;
       justify-content: center;
@@ -85,28 +92,124 @@
       display: block;
       touch-action: manipulation;
     }
+    /* Game Over Tekrar Başlama Onay Modalı */
+    .gameover-modal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      width: 88%;
+      max-width: 390px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid #38bdf8;
+      border-radius: 14px;
+      padding: 20px 18px;
+      text-align: center;
+      color: #f8fafc;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      display: none;
+      z-index: 25;
+    }
+    .gameover-modal.active {
+      display: block;
+    }
+    .gameover-title {
+      color: #f87171;
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+    }
+    .gameover-stats {
+      font-size: 15px;
+      color: #e2e8f0;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .gameover-question {
+      font-size: 16px;
+      font-weight: 700;
+      color: #facc15;
+      margin-bottom: 16px;
+    }
+    .gameover-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .btn-choice {
+      flex: 1;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .btn-choice:active {
+      transform: scale(0.96);
+    }
+    .btn-yes {
+      background: #16a34a;
+    }
+    .btn-no {
+      background: #64748b;
+    }
   </style>
 </head>
 <body>
   <div class="hud-bar">
-    <div class="hud-controls">
-      <button class="btn btn-start" id="btnStart">Yeni Oyun</button>
-      <button class="btn btn-pause" id="btnPause">Duraklat</button>
-      <select id="selDiff">
-        <option value="Kolay">Kolay</option>
-        <option value="Normal" selected>Normal</option>
-        <option value="Zor">Zor</option>
-      </select>
+    <div class="hud-row">
+      <div class="hud-controls">
+        <button class="btn btn-start" id="btnStart">Oyunu Başlat</button>
+        <button class="btn btn-pause" id="btnPause">Duraklat</button>
+      </div>
+      <div class="stats">
+        <span class="score-text" id="lblScore">Skor: 0</span>
+        <span class="high-text" id="lblHigh">En Yüksek: 0</span>
+        <span class="lvl-text" id="lblLevel">Sv: 1</span>
+      </div>
     </div>
-    <div class="stats">
-      <span class="score-text" id="lblScore">Skor: 0</span>
-      <span class="high-text" id="lblHigh">En Yüksek: 0</span>
-      <span class="lvl-text" id="lblLevel">Sv: 1</span>
+    <div class="hud-row">
+      <div class="hud-controls" style="width:100%; justify-content:space-between;">
+        <select id="selDiff" title="Zorluk Seviyesi">
+          <option value="Kolay">Zorluk: Kolay</option>
+          <option value="Normal" selected>Zorluk: Normal</option>
+          <option value="Zor">Zorluk: Zor</option>
+        </select>
+        <select id="selTheme" title="Arka Plan Teması">
+          <option value="Gunduz" selected>Tema: Gündüz ☀️</option>
+          <option value="GunBatimi">Tema: Gün Batımı 🌅</option>
+          <option value="Gece">Tema: Gece 🌙</option>
+          <option value="KarliKis">Tema: Karlı Kış ❄️</option>
+        </select>
+        <select id="selBird" title="Kuş Karakteri Seçimi">
+          <option value="SariKanarya" selected>Kuş: Sarı Kanarya 🐤</option>
+          <option value="KizilAnka">Kuş: Kızıl Anka 🔥</option>
+          <option value="MaviFirtina">Kuş: Mavi Fırtına ⚡</option>
+          <option value="ZumrutKusu">Kuş: Zümrüt Kuşu 🌿</option>
+          <option value="MorGolge">Kuş: Mor Gölge 🔮</option>
+        </select>
+      </div>
     </div>
   </div>
 
   <div class="game-wrapper">
     <canvas id="gameCanvas" width="480" height="720"></canvas>
+
+    <!-- Oyun Bittiğinde Açılan Seçenek Ekranı -->
+    <div class="gameover-modal" id="gameOverModal">
+      <div class="gameover-title">GAME OVER - OYUN BİTTİ</div>
+      <div class="gameover-stats" id="gameOverSummary">
+        Skorunuz: 0 | En Yüksek: 0<br />Seviye: 1 (Normal)
+      </div>
+      <div class="gameover-question">Tekrar başlamak istiyor musunuz?</div>
+      <div class="gameover-actions">
+        <button class="btn-choice btn-yes" id="btnRetryYes">✔ Evet, Tekrar Başla</button>
+        <button class="btn-choice btn-no" id="btnRetryNo">✖ Hayır, Ana Ekran</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -115,9 +218,15 @@
     const btnStart = document.getElementById("btnStart");
     const btnPause = document.getElementById("btnPause");
     const selDiff = document.getElementById("selDiff");
+    const selTheme = document.getElementById("selTheme");
+    const selBird = document.getElementById("selBird");
     const lblScore = document.getElementById("lblScore");
     const lblHigh = document.getElementById("lblHigh");
     const lblLevel = document.getElementById("lblLevel");
+    const gameOverModal = document.getElementById("gameOverModal");
+    const gameOverSummary = document.getElementById("gameOverSummary");
+    const btnRetryYes = document.getElementById("btnRetryYes");
+    const btnRetryNo = document.getElementById("btnRetryNo");
 
     const DIFFICULTY = {
       Kolay:  { speed: 3.0, gap: 185, gravity: 0.45, jump: -8.2 },
@@ -125,11 +234,44 @@
       Zor:    { speed: 4.8, gap: 138, gravity: 0.62, jump: -9.4 }
     };
 
+    const THEMES = {
+      Gunduz: {
+        skyTop: "#38bdf8", skyBottom: "#bae6fd",
+        soil: "#d9a066", grass: "#65a30d", stripe: "#84cc16",
+        pipeLight: "#22c55e", pipeDark: "#15803d", stars: false
+      },
+      GunBatimi: {
+        skyTop: "#7c2d12", skyBottom: "#fb923c",
+        soil: "#78350f", grass: "#b45309", stripe: "#d97706",
+        pipeLight: "#14b8a6", pipeDark: "#0f766e", stars: false
+      },
+      Gece: {
+        skyTop: "#0f172a", skyBottom: "#312e81",
+        soil: "#1e293b", grass: "#10b981", stripe: "#34d399",
+        pipeLight: "#38bdf8", pipeDark: "#0369a1", stars: true
+      },
+      KarliKis: {
+        skyTop: "#7dd3fc", skyBottom: "#f0f9ff",
+        soil: "#94a3b8", grass: "#f8fafc", stripe: "#e2e8f0",
+        pipeLight: "#3b82f6", pipeDark: "#1d4ed8", stars: false
+      }
+    };
+
+    const BIRD_SKINS = {
+      SariKanarya: { body: "#facc15", wing: "#fef08a", beak: "#f97316", outline: "#713f12", crest: false },
+      KizilAnka:   { body: "#ef4444", wing: "#fde047", beak: "#f97316", outline: "#7f1d1d", crest: true },
+      MaviFirtina: { body: "#0ea5e9", wing: "#e0f2fe", beak: "#facc15", outline: "#0c4a6e", crest: true },
+      ZumrutKusu:  { body: "#10b981", wing: "#a7f3d0", beak: "#f97316", outline: "#064e3b", crest: true },
+      MorGolge:    { body: "#a855f7", wing: "#f5d0fe", beak: "#facc15", outline: "#581c87", crest: true }
+    };
+
     let state = "READY"; // READY, PLAYING, PAUSED, GAMEOVER
     let score = 0;
     let highScore = parseInt(localStorage.getItem("ymh219_flappy_high") || "0", 10);
     let level = 1;
     let currentDiff = "Normal";
+    let currentTheme = "Gunduz";
+    let currentBirdSkin = "SariKanarya";
     let pipeSpeed = DIFFICULTY.Normal.speed;
     let groundOffset = 0;
     const groundHeight = 70;
@@ -170,24 +312,35 @@
       score = 0;
       level = 1;
       currentDiff = selDiff.value;
+      currentTheme = selTheme.value;
+      currentBirdSkin = selBird.value;
       pipeSpeed = DIFFICULTY[currentDiff].speed;
       bird.x = 95;
       bird.y = (canvas.height - groundHeight) / 2 - 20;
       bird.vy = 0;
       initPipes();
       updateHud();
+      gameOverModal.classList.remove("active");
+    }
+
+    function triggerGameOver() {
+      state = "GAMEOVER";
+      updateHud();
+      gameOverSummary.innerHTML = `Skorunuz: <b>${score}</b> &nbsp;|&nbsp; En Yüksek: <b>${highScore}</b><br/>Ulaşılan Seviye: <b>${level}</b> (${currentDiff})`;
+      gameOverModal.classList.add("active");
     }
 
     function jump() {
+      // Oyun bittiğinde ekrana dokunmak veya Space'e basmak oyunu hemen yeniden BAŞLATMAZ!
+      if (state === "GAMEOVER") {
+        return;
+      }
+
       if (state === "READY") {
         resetGame();
         state = "PLAYING";
         bird.vy = DIFFICULTY[currentDiff].jump;
       } else if (state === "PLAYING") {
-        bird.vy = DIFFICULTY[currentDiff].jump;
-      } else if (state === "GAMEOVER") {
-        resetGame();
-        state = "PLAYING";
         bird.vy = DIFFICULTY[currentDiff].jump;
       }
       updateHud();
@@ -245,8 +398,7 @@
       // Çarpışma kontrolü
       const bx = bird.x + 4, by = bird.y + 4, bw = bird.w - 8, bh = bird.h - 8;
       if (by + bh >= groundTop) {
-        state = "GAMEOVER";
-        updateHud();
+        triggerGameOver();
         return;
       }
 
@@ -255,8 +407,7 @@
         const hitTop = by < p.gapY;
         const hitBottom = by + bh > p.gapY + p.gapH;
         if (hitX && (hitTop || hitBottom)) {
-          state = "GAMEOVER";
-          updateHud();
+          triggerGameOver();
           return;
         }
       }
@@ -266,31 +417,47 @@
       const W = canvas.width;
       const H = canvas.height;
       const groundTop = H - groundHeight;
+      const theme = THEMES[currentTheme] || THEMES.Gunduz;
 
       // Gökyüzü
       const skyGrad = ctx.createLinearGradient(0, 0, 0, groundTop);
-      skyGrad.addColorStop(0, "#38bdf8");
-      skyGrad.addColorStop(1, "#bae6fd");
+      skyGrad.addColorStop(0, theme.skyTop);
+      skyGrad.addColorStop(1, theme.skyBottom);
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, W, groundTop);
 
+      // Gece yıldızları ve ay
+      if (theme.stars) {
+        ctx.fillStyle = "#fef08a";
+        const stars = [[45,40],[130,95],[210,35],[290,115],[380,45],[430,105],[90,165],[340,175]];
+        for (const [sx, sy] of stars) {
+          ctx.beginPath();
+          ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = "#fef9c3";
+        ctx.beginPath();
+        ctx.arc(W - 65, 55, 22, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       // Bulutlar
-      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.fillStyle = theme.stars ? "rgba(148,163,184,0.35)" : "rgba(255,255,255,0.82)";
       drawCloud(60, 80, 90, 34);
       drawCloud(250, 55, 110, 38);
       drawCloud(370, 110, 85, 30);
 
       // Borular
       for (const p of pipes) {
-        drawPipe(p.x, 0, pipeWidth, p.gapY, true);
+        drawPipe(p.x, 0, pipeWidth, p.gapY, true, theme);
         const botY = p.gapY + p.gapH;
-        drawPipe(p.x, botY, pipeWidth, Math.max(0, groundTop - botY), false);
+        drawPipe(p.x, botY, pipeWidth, Math.max(0, groundTop - botY), false, theme);
       }
 
       // Zemin
-      ctx.fillStyle = "#d9a066";
+      ctx.fillStyle = theme.soil;
       ctx.fillRect(0, groundTop, W, groundHeight);
-      ctx.fillStyle = "#65a30d";
+      ctx.fillStyle = theme.grass;
       ctx.fillRect(0, groundTop, W, 16);
 
       // Kuş
@@ -304,7 +471,7 @@
       ctx.fillStyle = "#ffffff";
       ctx.fillText(String(score), W / 2, 54);
 
-      if (state !== "PLAYING") {
+      if (state === "READY" || state === "PAUSED") {
         drawOverlay(W, groundTop);
       }
     }
@@ -317,13 +484,13 @@
       ctx.fill();
     }
 
-    function drawPipe(x, y, w, h, isTop) {
+    function drawPipe(x, y, w, h, isTop, theme) {
       if (h <= 0) return;
       const grad = ctx.createLinearGradient(x, 0, x + w, 0);
-      grad.addColorStop(0, "#22c55e");
-      grad.addColorStop(1, "#15803d");
+      grad.addColorStop(0, theme.pipeLight);
+      grad.addColorStop(1, theme.pipeDark);
       ctx.fillStyle = grad;
-      ctx.strokeStyle = "#14532d";
+      ctx.strokeStyle = "#0f172a";
       ctx.lineWidth = 2;
 
       ctx.fillRect(x, y, w, h);
@@ -336,18 +503,31 @@
     }
 
     function drawBird(x, y, w, h) {
+      const skin = BIRD_SKINS[currentBirdSkin] || BIRD_SKINS.SariKanarya;
       ctx.save();
-      ctx.fillStyle = "#facc15";
-      ctx.strokeStyle = "#713f12";
+      ctx.fillStyle = skin.body;
+      ctx.strokeStyle = skin.outline;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
+      // Üst İbik / Tüy
+      if (skin.crest) {
+        ctx.fillStyle = skin.wing;
+        ctx.beginPath();
+        ctx.moveTo(x + 14, y + 2);
+        ctx.lineTo(x + 20, y - 6);
+        ctx.lineTo(x + 26, y + 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
       // Kanat
       const wingY = bird.wingPhase < 6 ? y + 13 : y + 17;
-      ctx.fillStyle = "#fef08a";
+      ctx.fillStyle = skin.wing;
       ctx.beginPath();
       ctx.ellipse(x + 14, wingY, 8, 5.5, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -365,7 +545,7 @@
       ctx.fill();
 
       // Gaga
-      ctx.fillStyle = "#f97316";
+      ctx.fillStyle = skin.beak;
       ctx.beginPath();
       ctx.moveTo(x + w - 2, y + 12);
       ctx.lineTo(x + w + 9, y + 16);
@@ -389,18 +569,7 @@
       ctx.strokeRect(boxX, boxY, boxW, boxH);
 
       ctx.textAlign = "center";
-      if (state === "GAMEOVER") {
-        ctx.fillStyle = "#f87171";
-        ctx.font = "bold 24px 'Segoe UI', sans-serif";
-        ctx.fillText("GAME OVER - OYUN BİTTİ", W / 2, boxY + 48);
-        ctx.fillStyle = "#e2e8f0";
-        ctx.font = "16px 'Segoe UI', sans-serif";
-        ctx.fillText(`Skorunuz: ${score}  |  En Yüksek: ${highScore}`, W / 2, boxY + 95);
-        ctx.fillText(`Seviye: ${level} (${currentDiff})`, W / 2, boxY + 124);
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "italic 14px 'Segoe UI', sans-serif";
-        ctx.fillText("Tekrar oynamak için ekrana dokunun!", W / 2, boxY + 172);
-      } else if (state === "PAUSED") {
+      if (state === "PAUSED") {
         ctx.fillStyle = "#facc15";
         ctx.font = "bold 24px 'Segoe UI', sans-serif";
         ctx.fillText("OYUN DURAKLATILDI", W / 2, boxY + 60);
@@ -410,14 +579,14 @@
       } else {
         ctx.fillStyle = "#4ade80";
         ctx.font = "bold 23px 'Segoe UI', sans-serif";
-        ctx.fillText("FLAPPY BIRD MOBİL", W / 2, boxY + 48);
+        ctx.fillText("FLAPPY BIRD MOBİL", W / 2, boxY + 46);
         ctx.fillStyle = "#e2e8f0";
-        ctx.font = "15px 'Segoe UI', sans-serif";
-        ctx.fillText(`Zorluk: ${currentDiff}  |  En Yüksek: ${highScore}`, W / 2, boxY + 92);
-        ctx.fillText("Emine Zehra Duyar - YMH 219", W / 2, boxY + 122);
+        ctx.font = "14.5px 'Segoe UI', sans-serif";
+        ctx.fillText("Üst menüden Tema, Kuş ve Zorluk seçebilirsiniz!", W / 2, boxY + 86);
+        ctx.fillText(`En Yüksek Skor: ${highScore}  |  Emine Zehra Duyar`, W / 2, boxY + 118);
         ctx.fillStyle = "#38bdf8";
         ctx.font = "bold 15px 'Segoe UI', sans-serif";
-        ctx.fillText("Başlamak ve zıplamak için ekrana dokunun!", W / 2, boxY + 170);
+        ctx.fillText("Başlamak ve zıplamak için ekrana dokunun!", W / 2, boxY + 168);
       }
     }
 
@@ -438,14 +607,32 @@
       state = "PLAYING";
     });
 
+    btnRetryYes.addEventListener("click", () => {
+      resetGame();
+      state = "PLAYING";
+    });
+
+    btnRetryNo.addEventListener("click", () => {
+      resetGame();
+      state = "READY";
+    });
+
     btnPause.addEventListener("click", () => {
       if (state === "PLAYING") state = "PAUSED";
       else if (state === "PAUSED") state = "PLAYING";
     });
 
     selDiff.addEventListener("change", () => {
-      resetGame();
-      state = "READY";
+      currentDiff = selDiff.value;
+      if (state !== "PLAYING") resetGame();
+    });
+
+    selTheme.addEventListener("change", () => {
+      currentTheme = selTheme.value;
+    });
+
+    selBird.addEventListener("change", () => {
+      currentBirdSkin = selBird.value;
     });
 
     resetGame();
