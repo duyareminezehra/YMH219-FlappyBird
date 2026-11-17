@@ -229,9 +229,9 @@
     const btnRetryNo = document.getElementById("btnRetryNo");
 
     const DIFFICULTY = {
-      Kolay:  { speed: 3.0, gap: 185, gravity: 0.45, jump: -8.2 },
-      Normal: { speed: 3.8, gap: 160, gravity: 0.52, jump: -8.8 },
-      Zor:    { speed: 4.8, gap: 138, gravity: 0.62, jump: -9.4 }
+      Kolay:  { speed: 2.2, gap: 195, gravity: 0.20, jump: -5.6 },
+      Normal: { speed: 2.7, gap: 172, gravity: 0.24, jump: -6.0 },
+      Zor:    { speed: 3.3, gap: 150, gravity: 0.30, jump: -6.4 }
     };
 
     const THEMES = {
@@ -352,24 +352,24 @@
       lblLevel.textContent = `Sv: ${level}`;
     }
 
-    function update() {
+    function update(dt) {
       if (state !== "PLAYING") return;
 
       const cfg = DIFFICULTY[currentDiff];
-      bird.vy = Math.min(11, bird.vy + cfg.gravity);
-      bird.y += bird.vy;
-      bird.wingPhase = (bird.wingPhase + 1) % 12;
+      bird.vy = Math.min(5.8, bird.vy + cfg.gravity * dt);
+      bird.y += bird.vy * dt;
+      bird.wingPhase = (bird.wingPhase + dt) % 12;
       if (bird.y < 0) {
         bird.y = 0;
         bird.vy = 0;
       }
 
-      groundOffset = (groundOffset + pipeSpeed) % 32;
+      groundOffset = (groundOffset + pipeSpeed * dt) % 32;
       const groundTop = canvas.height - groundHeight;
 
       let rightmost = Math.max(...pipes.map(p => p.x));
       for (const p of pipes) {
-        p.x -= pipeSpeed;
+        p.x -= pipeSpeed * dt;
 
         if (!p.scored && p.x + pipeWidth < bird.x) {
           p.scored = true;
@@ -377,7 +377,7 @@
           const newLvl = Math.floor(score / 5) + 1;
           if (newLvl > level) {
             level = newLvl;
-            pipeSpeed += 0.35;
+            pipeSpeed += 0.25;
           }
           if (score > highScore) {
             highScore = score;
@@ -636,8 +636,13 @@
     });
 
     resetGame();
-    function loop() {
-      update();
+    let lastFrameTime = performance.now();
+    function loop(now) {
+      const elapsed = now - lastFrameTime;
+      lastFrameTime = now;
+      // 144Hz / 165Hz / 240Hz ekranlarda hızlanmayı önlemek için 60 FPS (16.67ms) tabanlı deltaTime
+      const dt = Math.min(2.0, Math.max(0.1, elapsed / 16.667));
+      update(dt);
       draw();
       requestAnimationFrame(loop);
     }
